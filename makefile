@@ -33,11 +33,11 @@ CCFLAGS = -O3
 
 ###############################################################################
 
-OBJ = cross_kernal.o cuda_utils.o exomol_functions.o GPUManager.o Input.o Timer.o Util.o HITRANStateReader.o ExomolStateReader.o BaseProfile.o VoigtProfile.o DopplerProfile.o StateReader.o MultiGPUManager.o
+OBJ = cross_kernal.o cuda_utils.o exomol_functions.o GPUManager.o Input.o Timer.o Util.o HITRANStateReader.o BD_TIPS_2011_v1p0.o ExomolStateReader.o BaseProfile.o VoigtProfile.o BaseManager.o DopplerProfile.o StateReader.o MultiGPUManager.o  
       # cprio.o
 
 gpu_cross.x:       $(OBJ) main.o
-	$(FOR) -o gpu_cross_$(PLAT).x $(OBJ) $(FFLAGS) main.o $(LIB) 
+	$(FOR) -o gpu_cross_$(PLAT).x $(OBJ) $(FFLAGS) main.o $(LIB) -lgfortran
 
 main.o:       main.cu $(OBJ) 
 	$(FOR) -c main.cu $(FFLAGS)
@@ -48,7 +48,7 @@ cross_kernal.o: cross_kernal.cu cuda_utils.o
 cuda_utils.o: cuda_utils.cu
 	$(FOR) -c cuda_utils.cu $(FFLAGS)
 
-HITRANStateReader.o: HITRANStateReader.cpp StateReader.o
+HITRANStateReader.o: HITRANStateReader.cpp StateReader.o BD_TIPS_2011_v1p0.o 
 	$(FOR) -c HITRANStateReader.cpp $(FFLAGS)
 
 ExomolStateReader.o: ExomolStateReader.cpp StateReader.o
@@ -66,10 +66,16 @@ VoigtProfile.o: VoigtProfile.cpp BaseProfile.o Timer.o HITRANStateReader.o Exomo
 DopplerProfile.o: DopplerProfile.cpp BaseProfile.o Timer.o HITRANStateReader.o ExomolStateReader.o
 	$(FOR) -c DopplerProfile.cpp $(FFLAGS)
 
-GPUManager.o: GPUManager.cpp
+GPUManager.o: GPUManager.cpp BaseManager.o
 	$(FOR) -c GPUManager.cpp $(FFLAGS)
 
-MultiGPUManager.o: MultiGPUManager.cpp GPUManager.o
+BaseManager.o: BaseManager.cpp
+	$(FOR) -c BaseManager.cpp $(FFLAGS)
+
+BD_TIPS_2011_v1p0.o: 
+	gfortran -c ./HITRAN_files/BD_TIPS_2011_v1p0.for -O3
+
+MultiGPUManager.o: MultiGPUManager.cpp GPUManager.o BaseManager.o
 	$(FOR) -c MultiGPUManager.cpp $(FFLAGS)
 	
 Input.o: Input.cpp Util.o

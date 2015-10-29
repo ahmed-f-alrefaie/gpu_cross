@@ -134,7 +134,7 @@ bool ExomolStateReader::ReadNextState(double & nu,double & gns,double & e_i, dou
 double ExomolStateReader::ComputePartition(double temperature){
 	if(partition<0.0){
 		this->partition = compute_partition(&exomol,temperature);
-		std::cout<<"Partition is: "<<partition<<std::endl;
+		std::cout<<"Partition is: "<<partition<<" for temperature"<<temperature<<std::endl;
 	}
 	return partition;
 }

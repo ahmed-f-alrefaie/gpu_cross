@@ -2,19 +2,16 @@
 #include "Timer.h"
 #include "cuda_utils.cuh"
 
-GpuManager::GpuManager(ProfileType pProfile,int pgpu_id) : alloc(false),g_freq(NULL),g_intens(NULL),g_energies(NULL),g_nu(NULL),g_aif(NULL),g_gns(NULL),g_gamma(NULL),g_n(NULL), gpu_id(pgpu_id){
+GpuManager::GpuManager(ProfileType pProfile,int pgpu_id) : BaseManager(pProfile), alloc(false),g_freq(NULL),g_intens(NULL),g_energies(NULL),g_nu(NULL),g_aif(NULL),g_gns(NULL),g_gamma(NULL),g_n(NULL), gpu_id(pgpu_id){
 	cudaSetDevice(gpu_id);
 	cudaFree(0);
 	//Get device properties
 	cudaDeviceProp devProp;
         cudaGetDeviceProperties(&devProp, 0);
 	//Now we compute total bytes
-	available_memory = devProp.totalGlobalMem;
-	total_memory = devProp.totalGlobalMem;
-	available_memory -= 300000000l;
+	InitializeMemory(devProp.totalGlobalMem-300000000l);
 	//available_memory /=6l;	
 	CheckCudaError("Get Device Properties");
-	profile = pProfile;
 
 }
 GpuManager::~GpuManager(){
@@ -55,9 +52,9 @@ void GpuManager::InitializeVectors(int Npoints){
 	cudaMalloc((void**)&g_intens,sizeof(double)*size_t(Npoints));
 	TrackMemory(sizeof(double)*size_t(Npoints));
 	if(profile==VOIGT)
-		N_trans = available_memory/(sizeof(double)+sizeof(double)+sizeof(double)+sizeof(int)+sizeof(double) + sizeof(double));
+		N_trans = GetAvailableMemory()/(sizeof(double)+sizeof(double)+sizeof(double)+sizeof(int)+sizeof(double) + sizeof(double));
 	else
-		N_trans = available_memory/(sizeof(double)+sizeof(double)+sizeof(double)+sizeof(int));
+		N_trans = GetAvailableMemory()/(sizeof(double)+sizeof(double)+sizeof(double)+sizeof(int));
 	printf("Number of transitions in the GPU = %d\n",N_trans);
 	cudaMalloc((void**)&g_energies,sizeof(double)*size_t(N_trans));
 	TrackMemory(sizeof(double)*size_t(N_trans));
@@ -168,16 +165,7 @@ void GpuManager::TransferResults(double* h_freq,double* h_intens,int N){
 }
 
 
-void GpuManager::TrackMemory(size_t bytes){
-	
-	available_memory -= bytes;
-}
-void GpuManager::FreeMemory(size_t bytes){
-	available_memory += bytes;
-}
-size_t GpuManager::GetAvailableMemory(){
-	return available_memory;
-}
+
 
 void GpuManager::Cleanup(){
 	cudaSetDevice(gpu_id);

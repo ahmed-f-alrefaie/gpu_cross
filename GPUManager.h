@@ -1,6 +1,6 @@
 #ifndef GPU_MANAGER_H
 #define GPU_MANAGER_H
-
+#include "BaseManager.h"
 #include <cuda_runtime_api.h>
 #include <cuda.h>
 #include <cmath>
@@ -9,11 +9,10 @@
 
 
 
-class GpuManager{
+class GpuManager : public BaseManager{
 	private:
 		int gpu_id;
-		size_t available_memory;
-		size_t total_memory;
+
 		//GPU pointers
 		double* g_freq;
 		double* g_intens;
@@ -25,7 +24,6 @@ class GpuManager{
 		int* g_gns;
 		int N_trans;
 		bool alloc;
-		ProfileType profile;
 		void ExecuteVoigtCrossSection(int N, int N_ener,int start_idx);
 		void ExecuteVoigtCrossSectionBlock(int N, int N_ener,int start_idx);
 		void ExecuteGaussianCrossSection(int N, int N_ener,int start_idx);	
@@ -41,10 +39,6 @@ class GpuManager{
 		void ExecuteCrossSection(int N, int N_ener,int start_idx);
 		void TransferResults(double* h_freq,double* h_intens,int N);
 		void Cleanup();
-		void TrackMemory(size_t bytes);
-		void FreeMemory(size_t bytes);
-		size_t GetAvailableMemory();
-		int GetNtrans(){ return N_trans;}
 		
 
 };

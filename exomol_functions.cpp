@@ -59,7 +59,7 @@ double compute_partition( exomol_states* states,double temp){
 	double pi=std::acos(-1.0);
 	double beta=planck*vellgt/(boltz*temp);
 
-
+	//printf("Computing the partition for %d states\n",n);
 	for(int i = 0; i < n; i ++){
 
 		partition+= states->states[i].gns*exp(-beta*states->states[i].energy);
@@ -67,6 +67,7 @@ double compute_partition( exomol_states* states,double temp){
 	}
 	states->partition = partition;
 	printf("Partition function = %12.6f\n",partition);
+	exit(0);
 	return partition;
 
 }

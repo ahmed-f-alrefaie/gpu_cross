@@ -9,14 +9,34 @@ int GetFieldStart(int field){
 		
 	return start;
 	
-}
+};
 
 int GetFieldLength(int field){
 	const int field_lengths[] =  {2,1,12,10,10,5,5,10,4,8,15,15,15,15,6,12,1,7,7};
 	return field_lengths[field];
 	
-}
+};
 
+
+void GetField(int field_num,const char* buffer,double & f){
+	char c_f[13]={0,0,0,0,0,0,0,0,0,0,0,0,0};
+	int start = GetFieldStart(field_num);
+	int length = GetFieldLength(field_num);
+	memcpy(c_f,buffer+start,length);	
+	c_f[12]='\0';
+	f = atof(c_f);
+	
+};
+void GetField(int field_num,const char* buffer,int & f){
+	char c_f[13]={0,0,0,0,0,0,0,0,0,0,0,0,0};
+	int start = GetFieldStart(field_num);
+	int length = GetFieldLength(field_num);
+
+	memcpy(c_f,buffer+start,length);	
+	c_f[12]='\0';
+	printf("start %d end %d   : %s\n",start,length,c_f);
+	f = atoi(c_f);
+};
 
 HITRANStateReader::HITRANStateReader(std::string pFilename,double pPartition,double pressure,double temperature,double mixture):StateReader(pFilename,pPartition) , m_pressure(pressure),m_mixture(mixture), m_temperature(temperature){
 	 open_file = OpenFile("");
@@ -36,6 +56,24 @@ bool HITRANStateReader::OpenFile(std::string pFilename){
 		return false;
 	}
 	open_file = true;
+
+	//Get molecular id and iso number
+	if(NULL==fgets(buffer,1024,hitran_file)){
+		printf("HITRAN FILE IS EMPTY!!");
+		exit(0);
+	}
+	
+	GetField(0,(char*)buffer,mol_id);
+	GetField(1,(char*)buffer,iso_num);
+	rewind(hitran_file); //Move back now
+	printf("Mol ID: %d , Iso: %d\n",mol_id,iso_num);
+
+	double d_gi = 0.0;
+	double d_temp = 296.0;
+	//Get the reference temperature
+	bd_tips_2011_(&mol_id,&d_temp,&iso_num,&d_gi,&ref_partition);
+	printf("Reference partition: %12.6f\n",ref_partition);
+
 	return true;
 	
 }
@@ -57,15 +95,25 @@ bool HITRANStateReader::ReadNextState(double & nu,double & gns,double & e_i, dou
 	
 
 
+}
 
+double HITRANStateReader::ComputePartition(double temperature){
+	double d_gi;
+	if(partition <= 0){
+		//Recompute
+		bd_tips_2011_(&mol_id,&temperature,&iso_num,&d_gi,&partition);
+		
+	}
 
+	return partition;
 
 }
+
 bool HITRANStateReader::ReadNextState(double & nu,double & gns,double & e_i, double & aif, double & gam,double & n){
 
 	if(!open_file)
 		return false;
-
+	/*
 	char c_nu[13];
 	char c_eif[13];
 	char c_gns[13];
@@ -73,7 +121,12 @@ bool HITRANStateReader::ReadNextState(double & nu,double & gns,double & e_i, dou
 	char c_gam[13];
 	char c_n[13];
 	char c_self[13];
-	
+	*/
+
+	//Replace soon
+
+	double self;
+	double intens;
 	//printf("%s\n",buffer);
 	if(NULL==fgets(buffer,1024,hitran_file))
 		return false;
@@ -84,6 +137,7 @@ bool HITRANStateReader::ReadNextState(double & nu,double & gns,double & e_i, dou
 //	scanf(buffer,"%2u%1u%12f%10f%10f%5f%5f%10f%4f%8f%15c%15c%15c%15c%6c%12c%1c%7f%7f",
 //&d1,&d1,&nu,&dd1,&aif,&dd1,&dd1,&e_i,&dd1,&dd1,small_buff,small_buff,small_buff,
 //	small_buff,small_buff,&d1,&d1,small_buff,&gns,&dd1);
+	/*
 	int start = GetFieldStart(2);
 	int length = GetFieldLength(2);
 
@@ -123,16 +177,33 @@ bool HITRANStateReader::ReadNextState(double & nu,double & gns,double & e_i, dou
 	c_n[12] = '\0';
 	c_self[12] = '\0';
 	//printf("Here: %s %14.3E\n",c_nu,atof(c_nu));
-	nu = atof(c_nu);
-	e_i = atof(c_eif);
-	aif=atof(c_aif);
-	gns = atof(c_gns);
-	gam = (atof(c_gam)*m_mixture + atof(c_self)*(1.0-m_mixture))*m_pressure;
-	n=atof(c_n);
+
+	*/
+	GetField(2,(char*)buffer,nu);
+	GetField(7,(char*)buffer,e_i);
+	GetField(4,(char*)buffer,aif);
+	GetField(5,(char*)buffer,gam);
+	GetField(6,(char*)buffer,self);
+	GetField(8,(char*)buffer,n);
+	GetField(17,(char*)buffer,gns);
+	GetField(3,(char*)buffer,intens);
+	gam = (gam*m_mixture + self*(1.0-m_mixture))*m_pressure;
+	//n=atof(c_n);
 
 	if(aif==0.0) {
+		double planck =6.6260693e-27;
+		double avogno=6.0221415e23;
+		double vellgt=2.99792458e10;
+		double boltz=1.380658e-16;
+		double pi=std::acos(-1.0);
+		double beta=planck*vellgt/(boltz*296.0);
+		//GNSAIF
 		//Compute the 'GNSAIF'
-		
+		aif = intens*8.0*pi*vellgt*ref_partition*nu*nu/(exp(-beta*e_i)*(1.0-exp(-beta*nu)));
+		gns=1.0;
+
+
+		/*
 		start = GetFieldStart(3);
 		length = GetFieldLength(3);
 		memcpy(c_aif,buffer+start,length);	
@@ -141,6 +212,8 @@ bool HITRANStateReader::ReadNextState(double & nu,double & gns,double & e_i, dou
 		//printf("%12.6f %12.6f %14.4E %d %12.6f %12.6f\n",nu, e_i, aif, int(gns),gam,n);
 		aif = atof(c_aif);
 		gns=-1.0;
+		*/
+		//
 		
 	}
 	return true;

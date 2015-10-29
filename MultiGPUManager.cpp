@@ -1,7 +1,7 @@
 #include "MultiGPUManager.h"
 
 
-MultiGpuManager::MultiGpuManager(ProfileType pProfile) : selected_gpu(0){
+MultiGpuManager::MultiGpuManager(ProfileType pProfile) : BaseManager(pProfile), selected_gpu(0){
 	int devCount;
 	cudaGetDeviceCount(&devCount);
 	printf("CUDA Device Query...\n");

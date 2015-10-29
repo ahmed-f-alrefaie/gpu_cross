@@ -1,5 +1,6 @@
 #ifndef MGPU_MANAGER_H
 #define MGPU_MANAGER_H
+#include "BaseManager.h"
 #include "GPUManager.h"
 #include <cuda_runtime_api.h>
 #include <cuda.h>
@@ -9,11 +10,10 @@
 
 
 
-class MultiGpuManager{
+class MultiGpuManager : public BaseManager{
 	private:
 		int t_num_gpus;
 		int N_trans;
-		ProfileType profile;
 		int selected_gpu;
 		void SwitchGPU();
 		GpuManager** gpu_managers;
@@ -29,7 +29,6 @@ class MultiGpuManager{
 		void ExecuteCrossSection(int N, int N_ener,int start_idx);
 		void TransferResults(double* h_freq,double* h_intens,int N);
 		void Cleanup();
-		int GetNtrans(){ return N_trans;}
 
 		
 
