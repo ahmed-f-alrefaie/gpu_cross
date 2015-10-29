@@ -16,7 +16,7 @@ void DopplerProfile::InitializeProfile(){
 		exit(0);
 	}
 
-	gpu_manager=new GpuManager(profile);
+	gpu_manager=new MultiGpuManager(profile);
 	gpu_manager->InitializeVectors(Npoints);
 	gpu_manager->TransferFreq(freq,intens,Npoints);
 	num_trans_fit=gpu_manager->GetNtrans();

@@ -50,7 +50,7 @@ void BaseProfile::PerformCrossSection(double HW){
 		printf("Waiting for previous calculation to finish......\n");
 		fflush(0);
 		Timer::getInstance().StartTimer("Execute GPU");	
-		cudaDeviceSynchronize(); // Synchronize at the beginning
+
 		gpu_manager->TransferVectors(Ntrans,h_energies, h_nu, h_aif,h_gns,h_gammaL,h_n);
 		ib = std::max(round( ( min_nu-HW-start_nu)/dfreq ),0.0);
 		ie =  std::min(round( ( max_nu+HW-start_nu)/dfreq ),double(Npoints));

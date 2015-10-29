@@ -2,7 +2,8 @@
 #include "Timer.h"
 #include "cuda_utils.cuh"
 
-GpuManager::GpuManager(ProfileType pProfile) : alloc(false),g_freq(NULL),g_intens(NULL),g_energies(NULL),g_nu(NULL),g_aif(NULL),g_gns(NULL),g_gamma(NULL),g_n(NULL){
+GpuManager::GpuManager(ProfileType pProfile,int pgpu_id) : alloc(false),g_freq(NULL),g_intens(NULL),g_energies(NULL),g_nu(NULL),g_aif(NULL),g_gns(NULL),g_gamma(NULL),g_n(NULL), gpu_id(pgpu_id){
+	cudaSetDevice(gpu_id);
 	cudaFree(0);
 	//Get device properties
 	cudaDeviceProp devProp;
@@ -23,6 +24,7 @@ GpuManager::~GpuManager(){
 
 
 void GpuManager::InitializeConstants(double half_width,double temperature, double partition,double dfreq,double mean_mass,double pressure,double ref_temp){
+	cudaSetDevice(gpu_id);
 	cross_section_data cross_constants;
 
 	double planck =6.6260693e-27;
@@ -47,6 +49,7 @@ void GpuManager::InitializeConstants(double half_width,double temperature, doubl
 }
 
 void GpuManager::InitializeVectors(int Npoints){
+	cudaSetDevice(gpu_id);
 	cudaMalloc((void**)&g_freq,sizeof(double)*size_t(Npoints));
 	TrackMemory(sizeof(double)*size_t(Npoints));
 	cudaMalloc((void**)&g_intens,sizeof(double)*size_t(Npoints));
@@ -75,6 +78,7 @@ void GpuManager::InitializeVectors(int Npoints){
 }
 
 void GpuManager::TransferFreq(double* h_freq,double* h_intens,int N){
+	cudaSetDevice(gpu_id);
 	cudaMemcpy(g_freq,h_freq,sizeof(double)*size_t(N),cudaMemcpyHostToDevice);
 	cudaMemcpy(g_intens,h_intens,sizeof(double)*size_t(N),cudaMemcpyHostToDevice);
 
@@ -83,6 +87,8 @@ void GpuManager::TransferFreq(double* h_freq,double* h_intens,int N){
 	CheckCudaError("Copy");
 }
 void GpuManager::TransferVectors(size_t Nener,double* h_energies, double* h_nu, double* h_aif,int* h_gns,double* h_gamma,double * h_n){
+	cudaSetDevice(gpu_id);
+	cudaDeviceSynchronize(); // Synchronize at the beginning
 	CheckCudaError("Kernal");
 	Timer::getInstance().StartTimer("MemCpy");
 	printf("Performing Copy, Ntransitions = %d\n",Nener);
@@ -101,6 +107,7 @@ void GpuManager::TransferVectors(size_t Nener,double* h_energies, double* h_nu, 
 }
 
 void GpuManager::ExecuteCrossSection(int N, int N_ener,int start_idx){
+	cudaSetDevice(gpu_id);
 	if(profile == GAUSSIAN)
 		execute_two_step_kernal_block(g_freq, g_intens,g_energies,g_nu,g_gns,g_aif,N,N_ener,start_idx);
 	else if(profile == DOPPLER)
@@ -115,7 +122,7 @@ void GpuManager::ExecuteCrossSection(int N, int N_ener,int start_idx){
 }
 
 void GpuManager::ExecuteGaussianCrossSection(int N, int N_ener,int start_idx){
-				
+		cudaSetDevice(gpu_id);		
 		execute_two_step_kernal_block(g_freq, g_intens,g_energies,g_nu,g_gns,g_aif,N,N_ener,start_idx);
 					//device_compute_cross_section_abscoef<<<gridSize,blockSize>>>(g_freq, g_cs,g_energies,g_gns,g_nu,g_aif,Npoints,N_ener,0);
 		//cudaDeviceSynchronize();
@@ -123,7 +130,7 @@ void GpuManager::ExecuteGaussianCrossSection(int N, int N_ener,int start_idx){
 }
 
 void GpuManager::ExecuteDopplerCrossSection(int N, int N_ener,int start_idx){
-				
+		cudaSetDevice(gpu_id);
 		execute_two_step_kernal_doppler_block(g_freq, g_intens,g_energies,g_nu,g_gns,g_aif,N,N_ener,start_idx);
 					//device_compute_cross_section_abscoef<<<gridSize,blockSize>>>(g_freq, g_cs,g_energies,g_gns,g_nu,g_aif,Npoints,N_ener,0);
 		//cudaDeviceSynchronize();
@@ -131,7 +138,7 @@ void GpuManager::ExecuteDopplerCrossSection(int N, int N_ener,int start_idx){
 }
 
 void GpuManager::ExecuteVoigtCrossSectionBlock(int N, int N_ener,int start_idx){
-		
+		cudaSetDevice(gpu_id);
 		if(g_gamma==NULL)
 			execute_two_step_kernal_voigt_block(g_freq, g_intens,g_energies,g_nu,g_gns,g_aif,N,N_ener,start_idx);
 		else
@@ -143,7 +150,7 @@ void GpuManager::ExecuteVoigtCrossSectionBlock(int N, int N_ener,int start_idx){
 
 
 void GpuManager::ExecuteVoigtCrossSection(int N, int N_ener,int start_idx){
-				
+		cudaSetDevice(gpu_id);		
 		execute_two_step_kernal_voigt(g_freq, g_intens,g_energies,g_nu,g_gns,g_aif,N,N_ener,start_idx);
 					//device_compute_cross_section_abscoef<<<gridSize,blockSize>>>(g_freq, g_cs,g_energies,g_gns,g_nu,g_aif,Npoints,N_ener,0);
 		//cudaDeviceSynchronize();
@@ -152,6 +159,7 @@ void GpuManager::ExecuteVoigtCrossSection(int N, int N_ener,int start_idx){
 
 
 void GpuManager::TransferResults(double* h_freq,double* h_intens,int N){
+	cudaSetDevice(gpu_id);
 	cudaDeviceSynchronize();
 	cudaMemcpy(h_freq,g_freq,sizeof(double)*size_t(N),cudaMemcpyDeviceToHost);
 	cudaMemcpy(h_intens,g_intens,sizeof(double)*size_t(N),cudaMemcpyDeviceToHost);
@@ -161,6 +169,7 @@ void GpuManager::TransferResults(double* h_freq,double* h_intens,int N){
 
 
 void GpuManager::TrackMemory(size_t bytes){
+	
 	available_memory -= bytes;
 }
 void GpuManager::FreeMemory(size_t bytes){
@@ -171,6 +180,7 @@ size_t GpuManager::GetAvailableMemory(){
 }
 
 void GpuManager::Cleanup(){
+	cudaSetDevice(gpu_id);
 	cudaFree(g_freq);
 	cudaFree(g_intens);
 	cudaFree(g_energies);

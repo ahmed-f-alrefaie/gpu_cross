@@ -1,4 +1,4 @@
-#include "GPUManager.h"
+#include "MultiGPUManager.h"
 #include "StateReader.h"
 #include "Input.h"
 #include "Timer.h"
@@ -8,7 +8,7 @@
 
 class BaseProfile{
 	protected:
-		GpuManager* gpu_manager;
+		MultiGpuManager* gpu_manager;
 		StateReader* state_reader;
 		Input* input;
 		ProfileType profile;
