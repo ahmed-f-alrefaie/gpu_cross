@@ -67,7 +67,7 @@ double compute_partition( exomol_states* states,double temp){
 	}
 	states->partition = partition;
 	printf("Partition function = %12.6f\n",partition);
-	exit(0);
+	
 	return partition;
 
 }
