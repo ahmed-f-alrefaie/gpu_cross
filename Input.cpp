@@ -130,10 +130,10 @@ void Input::ReadInputII(){
 			hitran_mixture_air=atof(split_line[1].c_str());
 		else if (indent_string == "PARTITION"){
 			partition=atof(split_line[1].c_str());
-			if(partition<=0 && which_file==HITRAN_TYPE){
-				printf("Partition computation of HITRAN files not implemented\n");
-				exit(0);
-			}
+			//if(partition<=0 && which_file==HITRAN_TYPE){
+			//	printf("Partition computation of HITRAN files not implemented\n");
+			//	exit(0);
+			//}
 		} 
 		else if (indent_string == "HALF-WIDTH")
 			half_width=atof(split_line[1].c_str()); 
@@ -141,6 +141,8 @@ void Input::ReadInputII(){
 			gamma_air=atof(split_line[1].c_str());
 		else if (indent_string == "N-AIR")
 			n_air=atof(split_line[1].c_str());
+		else if (indent_string == "MAX-POINTS")
+			max_points=atoi(split_line[1].c_str());
 		else if (indent_string == "STATE-FILE"){
 			
 			state_file = trim(split_line[1]).c_str();
@@ -175,7 +177,7 @@ void Input::ReadInputII(){
 
 	std::cout<<"-----------------Settings-----------------"<<std::endl;
 	cout<<"Temperature: "<<temperature<<" K  Pressure: "<<pressure<<" atm"<<endl;
-	cout<<"Partition: "<<partition<<endl;
+	cout<<"Partition: "<<partition<<" HITRAN Mix "<<hitran_mixture_air<<endl;
 	cout<<"Half-Width: "<<half_width<<endl;
 	cout<<" Nu Range: "<<nu_start<<" - "<<nu_end<<endl;
 	cout<<" Npoints: "<<Npoints<<endl;

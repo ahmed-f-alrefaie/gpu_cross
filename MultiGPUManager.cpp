@@ -28,10 +28,11 @@ void MultiGpuManager::InitializeVectors(int Npoints){
 	N_trans = 1000000000;
 	for(int i = 0; i < t_num_gpus; i++){
 		gpu_managers[i]->InitializeVectors(Npoints);
-		N_trans = min(N_trans,gpu_managers[i]->GetNtrans()); // get the largest NTrans
+		// get the largest NTrans
 	}
 		
-
+	N_trans = gpu_managers[0]->GetNtrans(); 
+	printf("MultiGPUManger: N_trans = %d\n",N_trans);
 
 }
 void MultiGpuManager::InitializeConstants(double half_width,double temperature, double partition,double dfreq,double meanmass,double pressure,double ref_temp){

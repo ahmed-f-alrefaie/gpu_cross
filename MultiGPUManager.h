@@ -13,7 +13,6 @@
 class MultiGpuManager : public BaseManager{
 	private:
 		int t_num_gpus;
-		int N_trans;
 		int selected_gpu;
 		void SwitchGPU();
 		GpuManager** gpu_managers;

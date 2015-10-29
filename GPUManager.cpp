@@ -10,6 +10,7 @@ GpuManager::GpuManager(ProfileType pProfile,int pgpu_id) : BaseManager(pProfile)
         cudaGetDeviceProperties(&devProp, 0);
 	//Now we compute total bytes
 	InitializeMemory(devProp.totalGlobalMem-300000000l);
+	printf("Available memory on GPU: %d  %zu bytes\n",gpu_id,GetAvailableMemory());
 	//available_memory /=6l;	
 	CheckCudaError("Get Device Properties");
 
@@ -65,7 +66,7 @@ void GpuManager::InitializeVectors(int Npoints){
 	cudaMalloc((void**)&g_gns,sizeof(int)*size_t(N_trans));
 	TrackMemory(sizeof(int)*size_t(N_trans));
 	if(profile==VOIGT){
-		printf("Allocating Voigt stuff");
+		//printf("Allocating Voigt stuff\n");
 		cudaMalloc((void**)&g_gamma,sizeof(double)*size_t(N_trans));
 		TrackMemory(sizeof(double)*size_t(N_trans));
 		cudaMalloc((void**)&g_n,sizeof(double)*size_t(N_trans));

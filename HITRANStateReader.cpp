@@ -34,12 +34,33 @@ void GetField(int field_num,const char* buffer,int & f){
 
 	memcpy(c_f,buffer+start,length);	
 	c_f[12]='\0';
-	printf("start %d end %d   : %s\n",start,length,c_f);
+	//printf("start %d end %d   : %s\n",start,length,c_f);
 	f = atoi(c_f);
 };
 
 HITRANStateReader::HITRANStateReader(std::string pFilename,double pPartition,double pressure,double temperature,double mixture):StateReader(pFilename,pPartition) , m_pressure(pressure),m_mixture(mixture), m_temperature(temperature){
-	 open_file = OpenFile("");
+	hitran_file = fopen(m_filename.c_str(),"r");
+	if(hitran_file==NULL){
+		printf("Could not open file %s ",m_filename.c_str());
+		//return false;
+		exit(0);
+	}
+	//open_file = true;
+
+	//Get molecular id and iso number
+	if(NULL==fgets(buffer,1024,hitran_file)){
+		printf("HITRAN FILE IS EMPTY!!");
+		exit(0);
+	}
+	
+	GetField(0,(char*)buffer,mol_id);
+	GetField(1,(char*)buffer,iso_num);
+	rewind(hitran_file); //Move back now
+	printf("Mol ID: %d , Iso: %d\n",mol_id,iso_num);
+	double d_gi=0.0;
+	fclose(hitran_file);
+	if(partition<=0)bd_tips_2011_(&mol_id,&temperature,&iso_num,&d_gi,&partition);
+
 
 }
 
@@ -66,7 +87,7 @@ bool HITRANStateReader::OpenFile(std::string pFilename){
 	GetField(0,(char*)buffer,mol_id);
 	GetField(1,(char*)buffer,iso_num);
 	rewind(hitran_file); //Move back now
-	printf("Mol ID: %d , Iso: %d\n",mol_id,iso_num);
+	//printf("Mol ID: %d , Iso: %d\n",mol_id,iso_num);
 
 	double d_gi = 0.0;
 	double d_temp = 296.0;
@@ -98,13 +119,17 @@ bool HITRANStateReader::ReadNextState(double & nu,double & gns,double & e_i, dou
 }
 
 double HITRANStateReader::ComputePartition(double temperature){
-	double d_gi;
+	double d_gi=0.0;
 	if(partition <= 0){
+		//printf("\n computing....");
+		//double d_temp =temperature 
 		//Recompute
-		bd_tips_2011_(&mol_id,&temperature,&iso_num,&d_gi,&partition);
+		partition = 0.0;
+		bd_tips_2011_(&mol_id,&temperature,&iso_num,&d_gi,&ref_partition);
+		printf("%12.6f Partition computed for temp %12.6f is : %12.6f\n",d_gi,temperature,partition);
 		
 	}
-
+	
 	return partition;
 
 }
@@ -124,7 +149,7 @@ bool HITRANStateReader::ReadNextState(double & nu,double & gns,double & e_i, dou
 	*/
 
 	//Replace soon
-
+	double gam_air;
 	double self;
 	double intens;
 	//printf("%s\n",buffer);
@@ -143,6 +168,7 @@ bool HITRANStateReader::ReadNextState(double & nu,double & gns,double & e_i, dou
 
 
 	memcpy(c_nu,buffer+start,length);
+
 	start = GetFieldStart(4);
 	length = GetFieldLength(4);
 	memcpy(c_aif,buffer+start,length);	
@@ -179,15 +205,18 @@ bool HITRANStateReader::ReadNextState(double & nu,double & gns,double & e_i, dou
 	//printf("Here: %s %14.3E\n",c_nu,atof(c_nu));
 
 	*/
+	
 	GetField(2,(char*)buffer,nu);
 	GetField(7,(char*)buffer,e_i);
 	GetField(4,(char*)buffer,aif);
-	GetField(5,(char*)buffer,gam);
+	GetField(5,(char*)buffer,gam_air);
 	GetField(6,(char*)buffer,self);
 	GetField(8,(char*)buffer,n);
 	GetField(17,(char*)buffer,gns);
 	GetField(3,(char*)buffer,intens);
-	gam = (gam*m_mixture + self*(1.0-m_mixture))*m_pressure;
+	//printf("Mixture ratio.......%12.6f\n",m_mixture);
+	gam = (gam_air*m_mixture + self*(1.0-m_mixture))*m_pressure;
+	//printf("%12.6f %12.6f %14.4E %d %12.6f %12.6f %12.6f \n",nu, e_i, aif, int(gns),gam,n,self);
 	//n=atof(c_n);
 
 	if(aif==0.0) {
@@ -202,7 +231,7 @@ bool HITRANStateReader::ReadNextState(double & nu,double & gns,double & e_i, dou
 		aif = intens*8.0*pi*vellgt*ref_partition*nu*nu/(exp(-beta*e_i)*(1.0-exp(-beta*nu)));
 		gns=1.0;
 
-
+		//printf("NEW: %14.4E \n",aif);
 		/*
 		start = GetFieldStart(3);
 		length = GetFieldLength(3);
