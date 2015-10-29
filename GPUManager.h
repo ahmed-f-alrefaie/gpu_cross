@@ -22,7 +22,6 @@ class GpuManager : public BaseManager{
 		double * g_gamma;
 		double * g_n;
 		int* g_gns;
-		int N_trans;
 		bool alloc;
 		void ExecuteVoigtCrossSection(int N, int N_ener,int start_idx);
 		void ExecuteVoigtCrossSectionBlock(int N, int N_ener,int start_idx);
