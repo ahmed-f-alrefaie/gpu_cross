@@ -1,7 +1,7 @@
 #include "DopplerProfile.h"
 #include "Timer.h"
 
-const double dopplerHW = 500.0;
+const double dopplerHW = 100.0;
 
 void DopplerProfile::InitializeProfile(){
 	

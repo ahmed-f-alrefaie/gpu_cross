@@ -24,6 +24,7 @@
 #define BOLTZ 1.380658e-16
 #define TOL 1e-4
 #define NA 6.0221412927e23
+#define DOPPLER_CUTOFF 100
 
 __constant__ cross_section_data cross_constants;
 
@@ -652,7 +653,7 @@ __global__ void device_compute_cross_section_doppler_steptwo_block(const double*
 
 	freq = g_freq[start_idx + b_idx];
 	//cs_val = g_cs[start_idx+g_idx];
-	double hw = 500.0;
+
 	//if(g_idx==9999)  printf("%12.6f\n",freq);	
 	l_cs_result[l_idx] = cs_val;
 	for(int i = l_idx; i < N_ener; i+=BLOCK_SIZE){
@@ -664,8 +665,8 @@ __global__ void device_compute_cross_section_doppler_steptwo_block(const double*
 
 		dfreq_ = freq-nu;
 
-		if(dfreq_ < -hw) continue;
-		if(dfreq_>hw) break;
+		if(dfreq_ < -DOPPLER_CUTOFF) continue;
+		if(dfreq_>DOPPLER_CUTOFF) break;
 
 		gammaG =  1.0/(nu*dpwcoeff);
 
