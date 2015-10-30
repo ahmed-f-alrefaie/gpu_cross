@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+//#include <bzlib.h>
 #pragma once
 
 
@@ -24,13 +25,19 @@ struct BroadInfo{
 };
 class ExomolStateReader : public StateReader{
 	private:
-		std::ifstream stream;
+		FILE* trans_file;
+		//std::ifstream stream;
 		exomol_states exomol;
 		BroadInfo broad_info;
+		//bz2_stream zip_stream;
 		bool use_broadeners;
+		bool use_compressed;
 		double m_pressure;
 		bool GetGammaN(state* state_i,state* state_f,double & gamma, double & n);
 		void InitializeBroadener(std::string filename);
+		void Decompress();
+		void OpenBz2(std::string pFilename);
+		void CloseBz2();
 	public:
 		ExomolStateReader(std::string pFilename="",double partition=-1.0,double pressure=1.0,std::string broadeners="");
 		~ExomolStateReader();

@@ -103,24 +103,33 @@ ExomolStateReader::~ExomolStateReader(){
 }
 
 bool ExomolStateReader::OpenFile(std::string pFilename){
-	stream.open(pFilename.c_str());
+	//stream.open(pFilename.c_str());
+	trans_file = fopen(pFilename.c_str(),"r");
 }
 bool ExomolStateReader::CloseFile(){
-	stream.close();
+	fclose(trans_file);
 }
 bool ExomolStateReader::ReadNextState(double & nu,double & gns,double & e_i, double & aif, double & gam,double & n){
-	int id_f,id_i;	
+	/*int id_f,id_i;	
 	if ( (stream>>id_f>>id_i>>aif)==false)
 		return false;
 	
 	id_f-=1;
 	id_i-=1;
 
+
+						//if(aif < 1e-30) continue;
+
+	*/
+	int id_f,id_i;	
+	if(fscanf(trans_file,"%12d %12d %10.4e",&id_f,&id_i,&aif)==0)
+		return false;
+	id_f-=1;
+	id_i-=1;
 	nu = exomol.states[id_f].energy-exomol.states[id_i].energy;
 	e_i = exomol.states[id_i].energy;
 	gns = exomol.states[id_f].gns;
-						//if(aif < 1e-30) continue;
-	if(use_broadeners=true)
+	if(use_broadeners==true)
 		GetGammaN(&exomol.states[id_i],&exomol.states[id_f],gam,n);
 	
 	//printf("%12.6f %12.6f %d %14.3E\n",nu,e_i,gns,gam,n);
