@@ -103,27 +103,56 @@ ExomolStateReader::~ExomolStateReader(){
 }
 
 bool ExomolStateReader::OpenFile(std::string pFilename){
+	
+	//stream.rdbuf()->pubsetbuf(file_buff, BUFFER_SIZE);
 	//stream.open(pFilename.c_str());
-	trans_file = fopen(pFilename.c_str(),"r");
+	  
+  	use_compression = pFilename.substr(pFilename.find_last_of(".") + 1) == "bz2";
+	if(!use_compression){
+		//trans_file = fopen(pFilename.c_str(),"r");
+		stream.open(pFilename.c_str());
+	}else{
+		//Open with BZ2 file
+		open_transition_file_bz2_(pFilename.c_str());
+		printf("Utilizing Bz2!\n");
+	}
+	
 }
 bool ExomolStateReader::CloseFile(){
-	fclose(trans_file);
+	//fclose(trans_file);
+	if(!use_compression){
+		stream.close();
+	}else{
+		close_transition_file_bz2_();
+		use_compression = false;
+	}
 }
 bool ExomolStateReader::ReadNextState(double & nu,double & gns,double & e_i, double & aif, double & gam,double & n){
-	/*int id_f,id_i;	
-	if ( (stream>>id_f>>id_i>>aif)==false)
-		return false;
+	int id_f,id_i;	
+	//if ( (stream>>id_f>>id_i>>aif)==false)
+	//	return false;
 	
-	id_f-=1;
-	id_i-=1;
+
 
 
 						//if(aif < 1e-30) continue;
 
-	*/
-	int id_f,id_i;	
-	if(fscanf(trans_file,"%12d %12d %10.4e",&id_f,&id_i,&aif)==0)
-		return false;
+	
+	if(!use_compression){
+		//if((num=fscanf(trans_file,"%12d %12d %lf",&id_f,&id_i,&aif))==0){
+		//	return false;
+		//}
+		if ( (stream>>id_f>>id_i>>aif)==false)
+			return false;
+
+	}else{
+		int error = 0;
+		read_trans_lines_bz2_(&id_f,&id_i,&aif,&error);
+		if(error>0)
+			return false;
+	}
+	
+
 	id_f-=1;
 	id_i-=1;
 	nu = exomol.states[id_f].energy-exomol.states[id_i].energy;

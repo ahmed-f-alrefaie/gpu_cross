@@ -20,7 +20,7 @@ FFLAGS = --ptxas-options=-v -O3 -arch=sm_35 -Xptxas -v -lineinfo
 
 
 FC = ifort
-CC = g++
+ICC = gcc
 CCFLAGS = -O3
 ##FC=/sw/sdev/intel/composer_xe_2013.1.117/composer_xe_2013/bin/ifort
 ##CC=/sw/sdev/intel/composer_xe_2013.1.117/composer_xe_2013/bin/icc
@@ -28,16 +28,16 @@ CCFLAGS = -O3
 #FC=/opt/intel/composer_xe_2013_sp1.0.080/bin/intel64/ifort
 #CC=/opt/intel/composer_xe_2013_sp1.0.080/bin/intel64/icc
 
-
-
+LIB = -lgfortran 
+INC = -I/home/ucapfal/gpu_cross/bz2_compression/
 
 ###############################################################################
 
-OBJ = cross_kernal.o cuda_utils.o exomol_functions.o GPUManager.o Input.o Timer.o Util.o HITRANStateReader.o BD_TIPS_2011_v1p0.o ExomolStateReader.o BaseProfile.o VoigtProfile.o BaseManager.o DopplerProfile.o StateReader.o MultiGPUManager.o  
+OBJ = cross_kernal.o cuda_utils.o exomol_functions.o GPUManager.o Input.o Timer.o Util.o HITRANStateReader.o BD_TIPS_2011_v1p0.o ExomolStateReader.o BaseProfile.o VoigtProfile.o BaseManager.o DopplerProfile.o StateReader.o MultiGPUManager.o read_compress_trans.o bzlib.o
       # cprio.o
 
 gpu_cross.x:       $(OBJ) main.o
-	$(FOR) -o gpu_cross_$(PLAT).x $(OBJ) $(FFLAGS) main.o $(LIB) -lgfortran
+	$(FOR) -o gpu_cross_$(PLAT).x $(OBJ) $(FFLAGS) main.o /home/ucapfal/bz2/bzip2-1.0.6/libbz2.a $(LIB) $(INC)
 
 main.o:       main.cu $(OBJ) 
 	$(FOR) -c main.cu $(FFLAGS)
@@ -51,7 +51,7 @@ cuda_utils.o: cuda_utils.cu
 HITRANStateReader.o: HITRANStateReader.cpp StateReader.o BD_TIPS_2011_v1p0.o 
 	$(FOR) -c HITRANStateReader.cpp $(FFLAGS)
 
-ExomolStateReader.o: ExomolStateReader.cpp StateReader.o
+ExomolStateReader.o: ExomolStateReader.cpp StateReader.o read_compress_trans.o
 	$(FOR) -c ExomolStateReader.cpp $(FFLAGS)
 
 StateReader.o: StateReader.cpp
@@ -90,6 +90,11 @@ Timer.o: Timer.cpp
 exomol_functions.o: exomol_functions.cpp Util.o
 	$(FOR) -c exomol_functions.cpp $(FFLAGS)
 
+bzlib.o: bz2_compression/bzlib.c
+	$(ICC) -c bz2_compression/bzlib.c  $(CCFLAGS) 
+
+read_compress_trans.o: bz2_compression/read_compress_trans.c bzlib.o
+	$(ICC) -c bz2_compression/read_compress_trans.c $(CCFLAGS) 
 clean:
 	rm $(OBJ) *.o main.o
 
