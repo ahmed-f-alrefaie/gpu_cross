@@ -6,7 +6,8 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include <cmath>
-
+#include <cuComplex.h>
+#include <thrust/complex.h>
 
 #define LN2 0.69314718056
 #define LN2PI 0.22063560015
@@ -161,6 +162,39 @@ __device__ double voigt_916(double x, double y, double a){
 	return t1;
 };
 
+__device__ double humlick(double x, double y){
+	thrust::complex<double> T = thrust::complex<double>(y, -x);
+	thrust::complex<double> humlic1;
+   // double complex T = y - x*I;
+    double S = fabs(x) + y;
+    if (S >= 15) {
+        // Region I
+        humlic1 = T*0.5641896/(0.5+T*T);
+        //fprintf(stdout, "I");
+     
+    }else if (S >= 5.5) {
+        // Region II
+        thrust::complex<double> U = T * T;
+        humlic1 = T * (1.410474 + U*.5641896)/(.75 + U*(3.+U));
+        //fprintf(stdout, "II");
+    }else if (y >= 0.195 * fabs(x) - 0.176) {
+        // Region III
+        humlic1 = (16.4955+T*(20.20933+T*(11.96482
+                +T*(3.778987+T*.5642236)))) / (16.4955+T*(38.82363
+                +T*(39.27121+T*(21.69274+T*(6.699398+T)))));
+        //fprintf(stdout, "III");
+    }else{
+    // Region IV
+    thrust::complex<double> U = T * T;
+    //double complex humlic1;
+    humlic1 = thrust::exp(U)-T*(36183.31-U*(3321.9905-U*(1540.787-U*(219.0313-U*
+       (35.76683-U*(1.320522-U*.56419))))))/(32066.6-U*(24322.84-U*
+       (9022.228-U*(2186.181-U*(364.2191-U*(61.57037-U*(1.841439-U)))))));
+    //fprintf(stdout, "IV");
+    }    
+    return humlic1.real();
+
+};
 
 __device__ double voigt_threegausshermite(double x, double y,double xxyy){
 	
@@ -905,8 +939,7 @@ __global__ void device_compute_cross_section_voigt_steptwo_block(const double*  
 
 __global__ void device_compute_cross_section_voigt_steptwo_block(const double*  g_freq, double* g_cs,const double*   g_nu,const double*  g_abscoef,const double*  g_gamma,const int N,const int N_ener,const int start_idx){
 	//The stored shared data
-	//__shared__ double l_nu[BLOCK_SIZE];
-	//__shared__ double l_abscoef[BLOCK_SIZE];
+
 	__shared__ double l_cs_result[VOIGT_BLOCK];
 	//Get the global and local thread number
 	int b_idx = blockIdx.x;
@@ -920,11 +953,11 @@ __global__ void device_compute_cross_section_voigt_steptwo_block(const double*  
 
 	double dpwcoeff = sqrt(2.0*BOLTZ*cross_constants.temperature*NA/((cross_constants.mean_mass)))/VELLGT;
 	double lorentz_cutoff = min(25.0*cross_constants.pressure,100.0);
-	//double temp_2=cross_constants.ln2pi/cross_constants.halfwidth;
-	//double temp_3 = -cross_constants.ln2*(1.0/(cross_constants.halfwidth*cross_constants.halfwidth));
 
 	freq = g_freq[start_idx + b_idx];
 	//cs_val = g_cs[start_idx+g_idx];
+	//Lets find which energy we deal with
+
 
 	//if(g_idx==9999)  printf("%12.6f\n",freq);	
 	l_cs_result[l_idx] = cs_val;
@@ -938,16 +971,16 @@ __global__ void device_compute_cross_section_voigt_steptwo_block(const double*  
 			continue;
 		if(dfreq_ > lorentz_cutoff)
 			break; //We are done here let another queued block do something
-		//gammaL = ;
 		gammaG = 1.0/(nu*dpwcoeff);
 		x =abs(dfreq_)*gammaG;
 		y =g_gamma[i]*gammaG;
-		double xxyy = x * x + y * y;
-		double voigt;// = voigt_916(x,y,0.9);
 
-
+		//double xxyy = x * x + y * y;
+		//double voigt;// = voigt_916(x,y,0.9);
+		//voigt = humlick(x,y);
+		/*
 		
-		////Algorithm 916
+		////Algorithm 916///
 		if(xxyy < 100.0){
 			voigt = voigt_916(x,y,0.9);
 			//cs_val+=g_abscoef[i]*voigt_check*gammaG*ISQRTPI;					
@@ -959,8 +992,10 @@ __global__ void device_compute_cross_section_voigt_steptwo_block(const double*  
 			voigt = y/(PI*xxyy); //This is basically lorentz
 			//cs_val+= g_abscoef[i]*ISQRTPI*gammaG;
 		}
-		cs_val+=g_abscoef[i]*voigt*gammaG;
-		//if((blockIdx.x * blockDim.x + threadIdx.x)==0)  printf("dfreq = %14.4E x=%14.4E y=%14.4E gammaL = %14.4E gammaG = %14.4E abscoef=%14.4E voigt=%14.4E cs_val=%14.4E\n",dfreq_,x,y,gammaL,gammaG,g_abscoef[i],voigt_check,cs_val);			
+		*/
+
+		cs_val+=g_abscoef[i]*humlick(x,y)*gammaG;
+		
 
 	}
 	//Store results into shared memory
