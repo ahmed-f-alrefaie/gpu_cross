@@ -90,7 +90,7 @@ void HybridManager::SelectWorker(){
 	int i = 0;	
 	//Wait until we have a worker
 	while(true){
-		i++;
+		
    		if(i >= t_num_workers)
 			i=0;
 		
@@ -99,6 +99,7 @@ void HybridManager::SelectWorker(){
 			current_worker = workers[i];
 			break;
 		}
+		i++;
 	}		
 
 }

@@ -183,6 +183,7 @@ void GpuManager::Cleanup(){
 }	
 
 bool GpuManager::ReadyForWork(){
+	cudaSetDevice(gpu_id);
 	return cudaSuccess==cudaStreamQuery(0);
 }
 
