@@ -110,7 +110,8 @@ void Input::ReadInputII(){
 	}
 	
 	partition = -1.0;
-
+	num_threads=1;
+	memory = 1000000000l;
 	while(getline(cin,line)){
 		//Clean the line
 		line =trim(line);
@@ -166,7 +167,12 @@ void Input::ReadInputII(){
 		}else if(indent_string == "NU-RANGE"){
 			nu_start = atof(split_line[1].c_str());
 			nu_end = atof(split_line[2].c_str());
-		}
+		}else if(indent_string == "MEMORY"){
+			size_t mem = atoi(split_line[1].c_str());
+			memory = mem*1000000000l;
+		}else if(indent_string == "NUM-THREADS"){
+			num_threads= atoi(split_line[1].c_str());
+		}	
 			  
 		
 		

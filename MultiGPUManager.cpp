@@ -44,7 +44,7 @@ void MultiGpuManager::InitializeConstants(double half_width,double temperature, 
 
 }
 void MultiGpuManager::TransferVectors(size_t Nener,double* h_energies, double* h_nu, double* h_aif,int* h_gns,double* h_gamma,double * h_n){
-
+	SwitchGPU();
 	selected_manager->TransferVectors(Nener,h_energies, h_nu, h_aif,h_gns,h_gamma,h_n);
 
 }
@@ -55,9 +55,8 @@ void MultiGpuManager::TransferFreq(double* h_freq,double* h_intens,int N){
 
 }
 void MultiGpuManager::ExecuteCrossSection(int N, int N_ener,int start_idx){
-	printf("Executing cross-section on GPU %d\n",selected_gpu);	
 	selected_manager->ExecuteCrossSection(N,N_ener,start_idx);
-	SwitchGPU(); //Switch to the next gpu
+	 //Switch to the next gpu
 }
 void MultiGpuManager::TransferResults(double* h_freq,double* h_intens,int N){
 	double* temp_freq = new double[N];
@@ -90,11 +89,24 @@ void MultiGpuManager::Cleanup(){
 
 }
 void MultiGpuManager::SwitchGPU(){
-	selected_gpu++;
-	if(selected_gpu>=t_num_gpus)
-		selected_gpu = 0;
-	
-	selected_manager = gpu_managers[selected_gpu];
+	int i = 0;	
+	//Wait until we have a gpu
+	while(true){
+		i++;
+   		if(i >= t_num_gpus)
+			i=0;
+		if(gpu_managers[i]->ReadyForWork()){
+			selected_manager = gpu_managers[i];
+			break;
+		}
+	}
 }
 
+bool MultiGpuManager::ReadyForWork(){
+	bool status = false;
+	for(int i = 0; i < t_num_gpus; i++){
+		status |= gpu_managers[i]->ReadyForWork();
+	}
+	return status;
+}
 

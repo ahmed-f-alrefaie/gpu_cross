@@ -106,6 +106,7 @@ void GpuManager::TransferVectors(size_t Nener,double* h_energies, double* h_nu, 
 
 void GpuManager::ExecuteCrossSection(int N, int N_ener,int start_idx){
 	cudaSetDevice(gpu_id);
+	printf("Executing cross-section on GPU %d\n",gpu_id);
 	if(profile == GAUSSIAN)
 		execute_two_step_kernal_block(g_freq, g_intens,g_energies,g_nu,g_gns,g_aif,N,N_ener,start_idx);
 	else if(profile == DOPPLER)
@@ -181,4 +182,7 @@ void GpuManager::Cleanup(){
 
 }	
 
+bool GpuManager::ReadyForWork(){
+	return cudaSuccess==cudaStreamQuery(0);
+}
 

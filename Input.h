@@ -34,6 +34,8 @@ class Input{
 		double gamma_air;
 		double n_air;
 		double hitran_mixture_air;
+		size_t memory;
+		int num_threads;
 		int max_points;
 		FileType which_file;
 		vector<string> trans_files;
@@ -60,6 +62,8 @@ class Input{
 		double GetPressure(){return pressure;}
 		double GetHitranMixture(){return hitran_mixture_air;}
 		double GetMaxPoints(){return max_points;}
+		int GetNumThreads(){return num_threads;}
+		size_t GetMemory(){return memory;}
 		FileType GetFileType(){return which_file;}
 
 		int GetNpoints(){return Npoints;};

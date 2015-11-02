@@ -1,14 +1,15 @@
-#include "MultiGPUManager.h"
+//##include "MultiGPUManager.h"
+#include "BaseManager.h"
 #include "StateReader.h"
 #include "Input.h"
 #include "Timer.h"
-
+#include "HybridManager.h"
 #pragma once
 
 
 class BaseProfile{
 	protected:
-		MultiGpuManager* gpu_manager;
+		BaseManager* manager;
 		StateReader* state_reader;
 		Input* input;
 		ProfileType profile;

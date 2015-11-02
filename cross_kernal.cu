@@ -9,23 +9,7 @@
 #include <cuComplex.h>
 #include <thrust/complex.h>
 
-#define LN2 0.69314718056
-#define LN2PI 0.22063560015
-#define SQRTLN2PI  0.46971863935
-#define SQRTLN2 0.83255461115
-#define ISQRTPI 0.564189584
-#define NSIGMA 3
-#define D_NSIGMA 3.0
-#define SIGMA_A 0.5
-#define A_SIGMA 0.5
-#define A_SIGMA_SQ 0.25
-#define PI 3.14159265359
-#define PLANCK 6.6260693e-27
-#define VELLGT 2.99792458e+10
-#define BOLTZ 1.380658e-16
-#define TOL 1e-4
-#define NA 6.0221412927e23
-#define DOPPLER_CUTOFF 100
+#include "defines.h"
 
 __constant__ cross_section_data cross_constants;
 
@@ -697,7 +681,7 @@ __global__ void device_compute_cross_section_doppler_steptwo_block(const double*
 		//Read value of nu
 		nu = g_nu[i];
 
-		dfreq_ = freq-nu;
+		dfreq_ = nu-freq;
 
 		if(dfreq_ < -DOPPLER_CUTOFF) continue;
 		if(dfreq_>DOPPLER_CUTOFF) break;

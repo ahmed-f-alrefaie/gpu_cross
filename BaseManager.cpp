@@ -20,5 +20,9 @@ BaseManager::BaseManager(ProfileType pprofile) : profile(pprofile){}
 
 BaseManager::~BaseManager(){}
 
-int BaseManager::GetNtrans(){return N_trans;}
+size_t BaseManager::GetNtrans(){return N_trans;}
+
+bool BaseManager::ReadyForWork(){
+	return true;
+}
 

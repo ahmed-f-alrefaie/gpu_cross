@@ -49,22 +49,22 @@ void BaseProfile::Initialize(){
 void BaseProfile::PerformCrossSection(double HW){
 		printf("Waiting for previous calculation to finish......\n");
 		fflush(0);
-		Timer::getInstance().StartTimer("Execute GPU");	
+		Timer::getInstance().StartTimer("Execute Cross-Section");	
 
-		gpu_manager->TransferVectors(Ntrans,h_energies, h_nu, h_aif,h_gns,h_gammaL,h_n);
+		manager->TransferVectors(Ntrans,h_energies, h_nu, h_aif,h_gns,h_gammaL,h_n);
 		ib = std::max(round( ( min_nu-HW-start_nu)/dfreq ),0.0);
 		ie =  std::min(round( ( max_nu+HW-start_nu)/dfreq ),double(Npoints));
 		points = ie - ib;
 		printf("Min nu = %12.6f Max_nu = %12.6f ib = %d ie = %d points = %d\n",min_nu,max_nu,ib,ie,points);
 		fflush(0);
-		gpu_manager->ExecuteCrossSection(points, Ntrans,ib);
-		Timer::getInstance().EndTimer("Execute GPU");
+		manager->ExecuteCrossSection(points, Ntrans,ib);
+		Timer::getInstance().EndTimer("Execute Cross-Section");
 }
 
 
 void BaseProfile::OutputProfile(){
 	//Output Data
-	gpu_manager->TransferResults(freq,intens,Npoints);
+	manager->TransferResults(freq,intens,Npoints);
 	
 	for(int i = 0; i < Npoints; i++){
 		printf("%12.6f %13.8E\n",freq[i],intens[i]);

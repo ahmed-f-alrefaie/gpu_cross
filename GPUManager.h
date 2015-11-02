@@ -12,8 +12,6 @@
 class GpuManager : public BaseManager{
 	private:
 		int gpu_id;
-
-		//GPU pointers
 		double* g_freq;
 		double* g_intens;
 		double* g_energies;
@@ -22,6 +20,7 @@ class GpuManager : public BaseManager{
 		double * g_gamma;
 		double * g_n;
 		int* g_gns;
+		//GPU pointers
 		bool alloc;
 		void ExecuteVoigtCrossSection(int N, int N_ener,int start_idx);
 		void ExecuteVoigtCrossSectionBlock(int N, int N_ener,int start_idx);
@@ -38,6 +37,7 @@ class GpuManager : public BaseManager{
 		void ExecuteCrossSection(int N, int N_ener,int start_idx);
 		void TransferResults(double* h_freq,double* h_intens,int N);
 		void Cleanup();
+		bool ReadyForWork();
 		
 
 };

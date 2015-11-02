@@ -16,13 +16,13 @@ void DopplerProfile::InitializeProfile(){
 		exit(0);
 	}
 
-	gpu_manager=new MultiGpuManager(profile);
-	gpu_manager->InitializeVectors(Npoints);
-	gpu_manager->TransferFreq(freq,intens,Npoints);
-	num_trans_fit=gpu_manager->GetNtrans();
+	manager=new HybridManager(profile,input->GetNumThreads(),input->GetMemory());
+	manager->InitializeVectors(Npoints);
+	manager->TransferFreq(freq,intens,Npoints);
+	num_trans_fit=manager->GetNtrans();
 
 
-	gpu_manager->InitializeConstants(input->GetHalfWidth(),input->GetTemperature(), state_reader->ComputePartition(input->GetTemperature()),dfreq,input->GetMeanMass(),input->GetPressure(),296.0);
+	manager->InitializeConstants(input->GetHalfWidth(),input->GetTemperature(), state_reader->ComputePartition(input->GetTemperature()),dfreq,input->GetMeanMass(),input->GetPressure(),296.0);
 
 
 	h_energies = new double[num_trans_fit];

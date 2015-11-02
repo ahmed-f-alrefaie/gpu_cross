@@ -1,10 +1,6 @@
-
-#include <cuda_runtime_api.h>
-#include <cuda.h>
 #include <cmath>
-#include "cross_kernal.cuh"
+#include <cstdlib>
 #include "Input.h"
-
 #pragma once
 
 class BaseManager{
@@ -12,7 +8,8 @@ private:
 		size_t available_memory;
 		size_t total_memory;
 protected:
-		int N_trans;
+		size_t N_trans;
+
 		ProfileType profile;
 		void InitializeMemory(size_t bytes);
 		void TrackMemory(size_t bytes);
@@ -29,7 +26,8 @@ public:
 		virtual void ExecuteCrossSection(int N, int N_ener,int start_idx)=0;
 		virtual void TransferResults(double* h_freq,double* h_intens,int N)=0;
 		virtual void Cleanup()=0;
-		int GetNtrans();
+		virtual bool ReadyForWork();
+		size_t GetNtrans();
 		
 
 };
