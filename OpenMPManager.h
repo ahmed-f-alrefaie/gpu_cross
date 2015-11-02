@@ -32,7 +32,8 @@ private:
 		int* g_gns;	
 		double start_nu;	
 		void JoinAllThreads();
-		void ComputeVoigt(int id,int Npoints,int Nener,int start_idx);		
+		void ComputeVoigt(int id,int Npoints,int Nener,int start_idx);	
+		void ComputeDoppler(int id,int Npoints,int Nener,int start_idx);		
 
 public:
 		OpenMPManager(ProfileType pprofile, int num_threads,size_t total_memory);

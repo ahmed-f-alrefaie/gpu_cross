@@ -102,6 +102,11 @@ void OpenMPManager::ExecuteCrossSection(int N, int N_ener,int start_idx){
 			//fflush(0);		
 			 workers.push_back(std::thread(&OpenMPManager::ComputeVoigt,this,i,N, N_ener,start_idx));
 		}
+	}else if(profile == DOPPLER){
+		for(int i = 0; i < total_threads; i++){
+			 threads_done[i]=false;		
+			 workers.push_back(std::thread(&OpenMPManager::ComputeDoppler,this,i,N, N_ener,start_idx));
+		}
 	}else{
 		printf("Profile not implemented!!\n");
 		exit(0);
@@ -129,7 +134,51 @@ void OpenMPManager::Cleanup()
 {
 
 }
+
+void OpenMPManager::ComputeDoppler(int id,int Npoints,int Nener,int start_idx){	
+
+	int thread_id = id;
+	int for_block = std::ceil(float(Nener)/float(total_threads));
+	int start = id*for_block;
+	int end = std::min(id*for_block + for_block,Nener);
+	//printf("Thread id = %d start = %d, end = %d block_size=%d\n",thread_id,start,end,for_block);
+	double* intens_ptr = t_intens[thread_id];
+	double dpwcoef = sqrt(2.0*LN2*BOLTZ*m_temperature*NA/(m_mean_mass))/VELLGT;
+	double lorentz_cutoff = min(25.0*m_pressure,100.0);
+	double x0 = m_dfreq*0.5;
+	//fflush(0);
+	for(int i = start; i < end; i++){
+		double nu_if = g_nu[i];
 		
+		if(nu_if==0) nu_if = 1e-6;
+
+		double abscoef= m_cmcoef*g_aif[i]*g_gns[i]
+				*exp(-m_beta*g_energies[i])*(1.0-exp(-m_beta*nu_if))/
+				(nu_if*nu_if*m_partition);	
+		
+		//double gammaL = g_gamma[i]*pow(m_ref_temp/m_temperature,g_n[i]);
+		int ib = std::max(round( ( nu_if-DOPPLER_CUTOFF-start_nu)/m_dfreq ),double(start_idx));
+		int ie =  std::min(round( ( nu_if+DOPPLER_CUTOFF-start_nu)/m_dfreq ),double(Npoints + start_idx));
+		//printf("[%d] nu = %12.6f abscoef = %14.3E ib = %d, ie = %d\n",thread_id,nu_if,abscoef,ib,ie);
+		if(abscoef==0.0) continue;
+		for(int j = ib; j < ie; j++){
+			double gammaG = 1.0/(nu_if*dpwcoef);
+			double dfreq_ = abs(nu_if - g_freq[j]);
+			double xp,xm,de;
+			xp = gammaG*((dfreq_)+x0);
+			xm = gammaG*((dfreq_)-x0);
+			de = erf(xp)-erf(xm); 
+			intens_ptr[j]+=abscoef*de;
+			//printf("[%d] x=%14.3E y = %14.3E Humlik = %14.3E\n",thread_id,x,y,humlic(x,y));
+		}
+
+	
+	}
+	threads_done[thread_id]=true;	
+	
+
+
+}	
 
 void OpenMPManager::ComputeVoigt(int id,int Npoints,int Nener,int start_idx){
 	
@@ -137,12 +186,12 @@ void OpenMPManager::ComputeVoigt(int id,int Npoints,int Nener,int start_idx){
 	int for_block = std::ceil(float(Nener)/float(total_threads));
 	int start = id*for_block;
 	int end = std::min(id*for_block + for_block,Nener);
-	printf("Thread id = %d start = %d, end = %d block_size=%d\n",thread_id,start,end,for_block);
+	//printf("Thread id = %d start = %d, end = %d block_size=%d\n",thread_id,start,end,for_block);
 	double* intens_ptr = t_intens[thread_id];
 	double dpwcoef = sqrt(2.0*LN2*BOLTZ*m_temperature*NA/(m_mean_mass))/VELLGT;
 	double lorentz_cutoff = min(25.0*m_pressure,100.0);
 	
-	fflush(0);
+	//fflush(0);
 	for(int i = start; i < end; i++){
 		double nu_if = g_nu[i];
 		
